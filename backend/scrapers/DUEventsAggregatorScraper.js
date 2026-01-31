@@ -136,7 +136,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
               tags: extractTags(title + ' ' + excerpt),
               ticketLink: link,
               entryFee: 'Check link for details',
-              status: 'draft'
+              status: 'published'
             });
           }
         } catch (e) {
@@ -189,7 +189,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
               tags: extractTags(title),
               ticketLink: link,
               entryFee: 'Check link for details',
-              status: 'draft'
+              status: 'published'
             });
           }
         } catch (e) {
@@ -259,7 +259,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
                 tags: extractTags(title),
                 ticketLink: link,
                 entryFee: priceText,
-                status: 'draft'
+                status: 'published'
               });
             }
           }
@@ -326,7 +326,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
               tags: extractTags(title),
               ticketLink: link,
               entryFee: 'Check link',
-              status: 'draft'
+              status: 'published'
             });
           }
         } catch (e) {
@@ -376,7 +376,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
               tags: extractTags(title),
               ticketLink: link,
               entryFee: 'Check link',
-              status: 'draft'
+              status: 'published'
             });
           }
         } catch (e) {
@@ -428,7 +428,7 @@ class DUEventsAggregatorScraper extends BaseScraper {
               tags: extractTags(title),
               ticketLink: link,
               entryFee: 'Check link',
-              status: 'draft'
+              status: 'published'
             });
           }
         } catch (e) {
