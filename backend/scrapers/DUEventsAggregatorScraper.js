@@ -43,6 +43,21 @@ class DUEventsAggregatorScraper extends BaseScraper {
         name: 'Insider Events',
         url: 'https://insider.in/delhi-ncr/college-events',
         type: 'listing'
+      },
+      {
+        name: 'Delhi Events',
+        url: 'https://www.delhievents.com/',
+        type: 'listing'
+      },
+      {
+        name: 'Live Your City',
+        url: 'https://liveyourcity.com/en/new-delhi',
+        type: 'listing'
+      },
+      {
+        name: 'Your Space DU Fests',
+        url: 'https://www.your-space.in/blogs/best-delhi-university-college-festivals/',
+        type: 'blog'
       }
     ];
   }
@@ -71,6 +86,15 @@ class DUEventsAggregatorScraper extends BaseScraper {
             break;
           case 'Knocksense Delhi':
             events = await this.scrapeKnocksense();
+            break;
+          case 'Delhi Events':
+            events = await this.scrapeDelhiEvents();
+            break;
+          case 'Live Your City':
+            events = await this.scrapeLiveYourCity();
+            break;
+          case 'Your Space DU Fests':
+            events = await this.scrapeYourSpace();
             break;
           default:
             events = await this.scrapeGenericNews(source.url, source.name);
@@ -385,6 +409,184 @@ class DUEventsAggregatorScraper extends BaseScraper {
       }
     } catch (error) {
       this.logError('Knocksense scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape Delhi Events - delhievents.com
+   */
+  async scrapeDelhiEvents() {
+    const events = [];
+    
+    try {
+      await this.navigate('https://www.delhievents.com/');
+      await this.waitForSelector('.event-card, .event-item, article, .post, .card', 8000);
+      
+      const cards = await this.page.$$('.event-card, .event-item, article, .card, .listing-item');
+      logger.info(`[${this.name}] Found ${cards.length} items on Delhi Events`);
+      
+      for (const card of cards.slice(0, 15)) {
+        try {
+          const title = await card.$eval(
+            'h2, h3, h4, .title, .event-title, a',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const link = await card.$eval('a', el => el.href).catch(() => null);
+          
+          const dateText = await card.$eval(
+            '.date, .event-date, time, .when',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const location = await card.$eval(
+            '.location, .venue, .place, .where',
+            el => el.textContent?.trim()
+          ).catch(() => 'Delhi');
+          
+          if (title && link && title.length > 5) {
+            events.push({
+              title: this.cleanTitle(title),
+              description: `Event from Delhi Events: ${title}`,
+              sourceUrl: link,
+              sourceType: 'scraped',
+              organizer: 'Delhi Events',
+              location: location || 'Delhi',
+              mode: 'offline',
+              startDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+              tags: extractTags(title),
+              ticketLink: link,
+              entryFee: 'Check link for details',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+    } catch (error) {
+      this.logError('Delhi Events scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape Live Your City - liveyourcity.com
+   */
+  async scrapeLiveYourCity() {
+    const events = [];
+    
+    try {
+      await this.navigate('https://liveyourcity.com/en/new-delhi');
+      await this.waitForSelector('.event-card, .event, article, .card, .item', 8000);
+      
+      const cards = await this.page.$$('.event-card, .event-item, article, .card, .item, .listing');
+      logger.info(`[${this.name}] Found ${cards.length} items on Live Your City`);
+      
+      for (const card of cards.slice(0, 15)) {
+        try {
+          const title = await card.$eval(
+            'h2, h3, h4, .title, .name, a',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const link = await card.$eval('a', el => el.href).catch(() => null);
+          
+          const dateText = await card.$eval(
+            '.date, time, .when, .event-date',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const location = await card.$eval(
+            '.location, .venue, .place',
+            el => el.textContent?.trim()
+          ).catch(() => 'New Delhi');
+          
+          if (title && link && title.length > 5 && this.isEventRelated(title)) {
+            events.push({
+              title: this.cleanTitle(title),
+              description: `Event from Live Your City: ${title}`,
+              sourceUrl: link,
+              sourceType: 'scraped',
+              organizer: 'Live Your City',
+              location: location || 'New Delhi',
+              mode: 'offline',
+              startDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+              tags: extractTags(title),
+              ticketLink: link,
+              entryFee: 'Check link for details',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+    } catch (error) {
+      this.logError('Live Your City scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape Your Space - DU College Festivals blog
+   */
+  async scrapeYourSpace() {
+    const events = [];
+    
+    try {
+      await this.navigate('https://www.your-space.in/blogs/best-delhi-university-college-festivals/');
+      await this.waitForSelector('h2, h3, article, .festival, .event, p', 8000);
+      
+      // This is a blog page with festival listings embedded in the content
+      const headings = await this.page.$$('h2, h3');
+      logger.info(`[${this.name}] Found ${headings.length} headings on Your Space DU Fests`);
+      
+      for (const heading of headings.slice(0, 20)) {
+        try {
+          const title = await heading.evaluate(el => el.textContent?.trim());
+          
+          // Look for any links near this heading
+          const link = await heading.$eval('a', el => el.href).catch(async () => {
+            // Try to find link in parent or next sibling
+            const parent = await heading.evaluateHandle(el => el.parentElement);
+            const parentLink = await parent.$eval('a', el => el.href).catch(() => null);
+            return parentLink;
+          });
+          
+          // Check if this looks like a festival/event name
+          const festKeywords = /fest|mela|carnival|fiesta|utsav|rendezvous|crescendo|pulse|saarang|mood indigo|reverie|odyssey|spring|autumn|cultural|college|srcc|stephens|hindu|hansraj|ramjas|kirori|miranda|lsr|venky|dyal singh/i;
+          
+          if (title && festKeywords.test(title)) {
+            events.push({
+              title: this.cleanTitle(title),
+              description: `Famous DU college festival: ${title}`,
+              sourceUrl: link || 'https://www.your-space.in/blogs/best-delhi-university-college-festivals/',
+              sourceType: 'scraped',
+              organizer: 'DU College',
+              location: 'Delhi University',
+              mode: 'offline',
+              startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString(),
+              category: 'cultural',
+              tags: ['festival', 'delhi university', 'college fest', ...extractTags(title)],
+              ticketLink: link || 'https://www.your-space.in/blogs/best-delhi-university-college-festivals/',
+              entryFee: 'Check college website',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+    } catch (error) {
+      this.logError('Your Space DU Fests scraping failed', error);
     }
     
     return events;
