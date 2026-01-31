@@ -88,22 +88,26 @@ export const EventDetailPage: React.FC = () => {
             </div>
 
             <div className="p-8 flex flex-col sm:flex-row gap-4 items-center justify-center bg-zinc-950">
-                <a 
-                  href={event.sourceUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="w-full sm:w-auto text-center px-6 py-4 border border-zinc-700 text-white font-bold uppercase tracking-wider hover:bg-zinc-800 hover:border-white transition-colors"
-                >
-                  Source
-                </a>
-                <a 
-                  href={event.ticketLink}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className={`w-full sm:w-auto text-center px-8 py-4 font-bold uppercase tracking-wider text-white transition-all ${isExpired ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]'}`}
-                >
-                   {isExpired ? 'Closed' : 'Book Tickets'}
-                </a>
+                {(event.sourceUrl || event.link) && (
+                  <a 
+                    href={event.sourceUrl || event.link} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="w-full sm:w-auto text-center px-6 py-4 border border-zinc-700 text-white font-bold uppercase tracking-wider hover:bg-zinc-800 hover:border-white transition-colors"
+                  >
+                    View Source
+                  </a>
+                )}
+                {(event.ticketLink || event.sourceUrl || event.link) && (
+                  <a 
+                    href={event.ticketLink || event.sourceUrl || event.link}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className={`w-full sm:w-auto text-center px-8 py-4 font-bold uppercase tracking-wider text-white transition-all ${isExpired ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed pointer-events-none' : 'bg-blue-600 hover:bg-blue-500 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]'}`}
+                  >
+                     {isExpired ? 'Closed' : 'Book Tickets'}
+                  </a>
+                )}
             </div>
         </div>
 

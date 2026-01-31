@@ -81,12 +81,21 @@ const eventSchema = new mongoose.Schema({
     default: 'scraper'
   },
   
+  // Source URL - the page where the event was scraped from
+  sourceUrl: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  
+  // Legacy link field (kept for backward compatibility)
   link: {
     type: String,
     trim: true,
     default: ''
   },
   
+  // Ticket/registration link
   ticketLink: {
     type: String,
     trim: true,
@@ -149,6 +158,29 @@ const eventSchema = new mongoose.Schema({
   timestamps: true,  // Adds createdAt and updatedAt
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
+});
+
+// Virtual to ensure sourceUrl is always available (fallback to link)
+eventSchema.virtual('effectiveSourceUrl').get(function() {
+  return this.sourceUrl || this.link || '';
+});
+
+// Virtual to ensure ticketLink is always available (fallback to sourceUrl or link)
+eventSchema.virtual('effectiveTicketLink').get(function() {
+  return this.ticketLink || this.sourceUrl || this.link || '';
+});
+
+// Pre-save middleware to ensure sourceUrl and ticketLink are populated
+eventSchema.pre('save', function(next) {
+  // If sourceUrl is empty, use link
+  if (!this.sourceUrl && this.link) {
+    this.sourceUrl = this.link;
+  }
+  // If ticketLink is empty, use sourceUrl or link
+  if (!this.ticketLink) {
+    this.ticketLink = this.sourceUrl || this.link || '';
+  }
+  next();
 });
 
 // Indexes for efficient queries

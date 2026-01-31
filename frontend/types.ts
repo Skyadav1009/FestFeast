@@ -23,11 +23,13 @@ export interface FestEvent {
   description: string;
   mode: EventMode;
   location: string; // Specific venue e.g. "JLN Stadium"
+  date?: string; // Raw date string from scraper
   startDate: string; // ISO Date string
   endDate: string; // ISO Date string
   bookingDeadline: string; // ISO Date string
   entryFee: string; // e.g. "Free", "₹499"
   tags: string[];
+  link?: string; // Legacy link field
   ticketLink: string;
   sourceUrl: string;
   sourceType: SourceType;

@@ -90,23 +90,27 @@ export const HackathonDetailPage: React.FC = () => {
             </div>
 
             <div className="flex gap-3 w-full sm:w-auto">
-                <a 
-                  href={event.sourceUrl} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="flex-1 sm:flex-none justify-center px-4 py-2 border border-zinc-700 rounded-lg text-zinc-300 font-medium hover:bg-zinc-800 hover:text-white transition-colors flex items-center"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Source
-                </a>
-                <a 
-                  href={event.ticketLink}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className={`flex-1 sm:flex-none justify-center px-6 py-2 rounded-lg font-bold text-black shadow-lg shadow-amber-900/20 flex items-center transition-all ${isExpired ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-400 hover:shadow-amber-500/30 hover:-translate-y-0.5'}`}
-                >
-                   {isExpired ? 'Registration Closed' : 'Register Now'}
-                </a>
+                {(event.sourceUrl || event.link) && (
+                  <a 
+                    href={event.sourceUrl || event.link} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="flex-1 sm:flex-none justify-center px-4 py-2 border border-zinc-700 rounded-lg text-zinc-300 font-medium hover:bg-zinc-800 hover:text-white transition-colors flex items-center"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View Source
+                  </a>
+                )}
+                {(event.ticketLink || event.sourceUrl || event.link) && (
+                  <a 
+                    href={event.ticketLink || event.sourceUrl || event.link}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className={`flex-1 sm:flex-none justify-center px-6 py-2 rounded-lg font-bold text-black shadow-lg shadow-amber-900/20 flex items-center transition-all ${isExpired ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed pointer-events-none' : 'bg-amber-500 hover:bg-amber-400 hover:shadow-amber-500/30 hover:-translate-y-0.5'}`}
+                  >
+                     {isExpired ? 'Registration Closed' : 'Register Now'}
+                  </a>
+                )}
             </div>
         </div>
 

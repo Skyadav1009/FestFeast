@@ -132,6 +132,9 @@ class HackathonScraper extends BaseScraper {
           const mode = fullText.toLowerCase().includes('online') ? 'Online' : 
                        fullText.toLowerCase().includes('offline') ? 'Offline' : 'Hybrid';
           
+          // Build proper URL
+          const eventUrl = link?.startsWith('http') ? link : `https://devfolio.co${link || ''}`;
+          
           events.push({
             title: title.trim(),
             description: isPlaceholderDate ? 'Date to be announced - check event link' : '',
@@ -141,14 +144,17 @@ class HackathonScraper extends BaseScraper {
             location: location.trim(),
             venue: location.trim(),
             organizer: 'Devfolio',
-            link: link?.startsWith('http') ? link : `https://devfolio.co${link || ''}`,
+            link: eventUrl,
+            sourceUrl: eventUrl,
+            ticketLink: eventUrl,
             source: 'Devfolio',
             sourceType: 'scraper',
             category: 'hackathon',
             tags: ['Hackathon', 'Tech Fest', ...extractTags(title, fullText)],
             mode: mode,
             entryFee: 'Free',
-            confidence: isIndia ? 0.9 : 0.7
+            confidence: isIndia ? 0.9 : 0.7,
+            status: 'published'
           });
           
         } catch (error) {
@@ -191,6 +197,9 @@ class HackathonScraper extends BaseScraper {
           
           const parsedDate = parseFlexibleDate(dateText);
           
+          // Build proper URL
+          const eventUrl = link?.startsWith('http') ? link : `https://mlh.io${link || ''}`;
+          
           events.push({
             title: title.trim(),
             description: '',
@@ -200,7 +209,9 @@ class HackathonScraper extends BaseScraper {
             location: location.trim(),
             venue: location.trim(),
             organizer: 'MLH',
-            link: link?.startsWith('http') ? link : `https://mlh.io${link || ''}`,
+            link: eventUrl,
+            sourceUrl: eventUrl,
+            ticketLink: eventUrl,
             source: 'MLH',
             sourceType: 'scraper',
             category: 'hackathon',
@@ -208,7 +219,8 @@ class HackathonScraper extends BaseScraper {
             mode: fullText.toLowerCase().includes('in-person') ? 'Offline' : 
                   fullText.toLowerCase().includes('hybrid') ? 'Hybrid' : 'Online',
             entryFee: 'Free',
-            confidence: 0.95
+            confidence: 0.95,
+            status: 'published'
           });
           
         } catch (error) {
@@ -252,6 +264,9 @@ class HackathonScraper extends BaseScraper {
           
           const parsedDate = parseFlexibleDate(dateText);
           
+          // Build proper URL
+          const eventUrl = link?.startsWith('http') ? link : `https://devpost.com${link || ''}`;
+          
           events.push({
             title: title.trim(),
             description: prize ? `Prize: ${prize}` : '',
@@ -261,14 +276,17 @@ class HackathonScraper extends BaseScraper {
             location: location.trim(),
             venue: location.trim(),
             organizer: 'Devpost',
-            link: link?.startsWith('http') ? link : `https://devpost.com${link || ''}`,
+            link: eventUrl,
+            sourceUrl: eventUrl,
+            ticketLink: eventUrl,
             source: 'Devpost',
             sourceType: 'scraper',
             category: 'hackathon',
             tags: ['Hackathon', 'Tech Fest'],
             mode: 'Online',
             entryFee: 'Free',
-            confidence: 0.9
+            confidence: 0.9,
+            status: 'published'
           });
           
         } catch (error) {
