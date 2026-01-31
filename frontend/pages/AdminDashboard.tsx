@@ -103,7 +103,7 @@ export const AdminDashboard: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-zinc-400 font-mono uppercase truncate max-w-xs">{h.location}</td>
                   <td className="px-6 py-4 text-sm text-zinc-400 font-mono">
-                    {new Date(h.startDate).toLocaleDateString()}
+                    {h.startDate ? new Date(h.startDate).toLocaleDateString() : h.date || 'TBD'}
                   </td>
                   <td className="px-6 py-4">
                       <Badge variant={h.sourceType === 'ai' ? 'blue' : 'outline'} className="rounded-none">

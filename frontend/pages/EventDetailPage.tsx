@@ -123,19 +123,27 @@ export const EventDetailPage: React.FC = () => {
                       <div className="bg-zinc-950 border border-zinc-800 p-6">
                           <span className="block text-xs text-zinc-500 uppercase tracking-widest mb-2">Starts</span>
                           <span className="text-lg font-bold text-white block">
-                             {new Date(event.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                             {event.startDate 
+                               ? new Date(event.startDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+                               : event.date || 'Date TBD'}
                           </span>
                           <span className="text-blue-500 font-mono">
-                             {new Date(event.startDate).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}
+                             {event.startDate 
+                               ? new Date(event.startDate).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })
+                               : 'Time TBD'}
                           </span>
                       </div>
                       <div className="bg-zinc-950 border border-zinc-800 p-6">
                           <span className="block text-xs text-zinc-500 uppercase tracking-widest mb-2">Ends</span>
                           <span className="text-lg font-bold text-white block">
-                             {new Date(event.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                             {event.endDate 
+                               ? new Date(event.endDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+                               : 'Date TBD'}
                           </span>
                           <span className="text-pink-500 font-mono">
-                             {new Date(event.endDate).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })}
+                             {event.endDate 
+                               ? new Date(event.endDate).toLocaleTimeString(undefined, { hour: '2-digit', minute:'2-digit' })
+                               : 'Time TBD'}
                           </span>
                       </div>
                   </div>

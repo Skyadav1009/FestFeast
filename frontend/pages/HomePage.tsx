@@ -146,7 +146,13 @@ export const HomePage: React.FC = () => {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center text-zinc-400">
                         <Calendar className="w-4 h-4 mr-3 text-zinc-600" />
-                        <span className="font-mono">{new Date(event.startDate).toLocaleDateString(undefined, {month:'short', day:'numeric'}).toUpperCase()}</span>
+                        <span className="font-mono">
+                          {event.startDate 
+                            ? new Date(event.startDate).toLocaleDateString(undefined, {month:'short', day:'numeric'}).toUpperCase()
+                            : event.date && event.date !== 'TBA' 
+                              ? event.date.toUpperCase() 
+                              : 'DATE TBD'}
+                        </span>
                     </div>
                     <div className="flex items-center text-blue-500 font-black tracking-wider">
                         <Ticket className="w-4 h-4 mr-2" />

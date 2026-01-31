@@ -125,12 +125,16 @@ export const HackathonDetailPage: React.FC = () => {
                   <div className="space-y-4 bg-zinc-950 p-6 rounded-xl border border-zinc-800">
                       <div className="flex justify-between items-center">
                           <span className="text-zinc-500">Start Date</span>
-                          <span className="font-medium text-zinc-200">{new Date(event.startDate).toLocaleDateString()}</span>
+                          <span className="font-medium text-zinc-200">
+                            {event.startDate ? new Date(event.startDate).toLocaleDateString() : event.date || 'TBD'}
+                          </span>
                       </div>
                       <div className="w-full h-px bg-zinc-800"></div>
                       <div className="flex justify-between items-center">
                           <span className="text-zinc-500">End Date</span>
-                          <span className="font-medium text-zinc-200">{new Date(event.endDate).toLocaleDateString()}</span>
+                          <span className="font-medium text-zinc-200">
+                            {event.endDate ? new Date(event.endDate).toLocaleDateString() : 'TBD'}
+                          </span>
                       </div>
                   </div>
                 </section>
