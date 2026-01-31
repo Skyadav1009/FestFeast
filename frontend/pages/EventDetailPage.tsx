@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ApiService } from '../services/realApi';
 import { FestEvent } from '../types';
 import { Badge } from '../components/Badge';
+import { SaveButton } from '../components/SaveButton';
 import { Calendar, MapPin, Ticket, ExternalLink, Clock, ShieldCheck, ArrowLeft, Tag } from 'lucide-react';
 
 export const EventDetailPage: React.FC = () => {
@@ -55,13 +56,14 @@ export const EventDetailPage: React.FC = () => {
            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px]"></div>
            
            <div className="relative z-10">
-            <div className="flex flex-wrap gap-3 mb-6">
+            <div className="flex flex-wrap gap-3 mb-6 items-center">
               <Badge variant="outline" className="border-zinc-600 text-zinc-300">{event.mode}</Badge>
               {isExpired ? (
                   <Badge variant="filledError">Event Ended</Badge>
               ) : (
                   <Badge variant="filledSuccess">Upcoming</Badge>
               )}
+              <SaveButton eventId={event._id} size="md" />
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-white mb-6 uppercase leading-none tracking-tight">{event.title}</h1>
             <p className="text-xl text-blue-500 font-mono uppercase tracking-widest">// {event.organizer}</p>

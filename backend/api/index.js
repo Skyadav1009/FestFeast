@@ -7,6 +7,7 @@ import { Router } from 'express';
 import eventsRouter from './events.js';
 import scrapeRouter from './scrape.js';
 import healthRouter from './health.js';
+import savedRouter from './saved.js';
 
 const router = Router();
 
@@ -14,6 +15,7 @@ const router = Router();
 router.use('/events', eventsRouter);
 router.use('/scrape', scrapeRouter);
 router.use('/health', healthRouter);
+router.use('/saved', savedRouter);
 
 // API root info
 router.get('/', (req, res) => {
@@ -32,6 +34,15 @@ router.get('/', (req, res) => {
         'POST /api/events': 'Create event (protected)',
         'PUT /api/events/:id': 'Update event (protected)',
         'DELETE /api/events/:id': 'Delete event (protected)'
+      },
+      saved: {
+        'GET /api/saved/token': 'Get or generate device token',
+        'POST /api/saved/token': 'Generate new device token',
+        'GET /api/saved': 'Get all saved events',
+        'GET /api/saved/ids': 'Get saved event IDs only',
+        'POST /api/saved/:eventId': 'Save an event',
+        'DELETE /api/saved/:eventId': 'Unsave an event',
+        'GET /api/saved/check/:eventId': 'Check if event is saved'
       },
       scraper: {
         'POST /api/scrape': 'Trigger all scrapers (API key required)',

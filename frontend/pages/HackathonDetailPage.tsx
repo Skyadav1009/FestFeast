@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ApiService } from '../services/realApi';
 import { FestEvent } from '../types';
 import { Badge } from '../components/Badge';
+import { SaveButton } from '../components/SaveButton';
 import { Award, ExternalLink, Clock, ShieldCheck, ArrowLeft, Tag } from 'lucide-react';
 
 export const HackathonDetailPage: React.FC = () => {
@@ -61,7 +62,7 @@ export const HackathonDetailPage: React.FC = () => {
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-600/20 rounded-full blur-[100px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
           
           <div className="relative z-10">
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 items-center">
               <Badge variant={event.mode === 'Online' ? 'success' : 'warning'} className="bg-zinc-900/50 backdrop-blur border-zinc-700">{event.mode}</Badge>
               {isExpired ? (
                   <Badge variant="filledError">Expired</Badge>
@@ -70,6 +71,7 @@ export const HackathonDetailPage: React.FC = () => {
               ) : (
                   <Badge variant="filledSuccess">Open to Register</Badge>
               )}
+              <SaveButton eventId={event._id} size="md" />
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">{event.title}</h1>
             <p className="text-xl text-zinc-400 font-medium">Organized by <span className="text-zinc-200">{event.organizer}</span></p>

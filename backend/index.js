@@ -31,7 +31,7 @@ app.use(cors({
     process.env.FRONTEND_URL      // Additional frontend URL from env
   ].filter(Boolean),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Device-Token'],
   credentials: true
 }));
 
