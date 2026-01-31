@@ -90,11 +90,11 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between sticky top-16 bg-black/95 backdrop-blur-sm z-40 py-6 border-b border-zinc-800">
-        <div className="flex gap-0 border border-zinc-800">
+      <div className="flex flex-col gap-4 sticky top-16 bg-black/95 backdrop-blur-sm z-40 py-6 border-b border-zinc-800">
+        <div className="flex gap-0 border border-zinc-800 overflow-x-auto scrollbar-hide">
           <button 
             onClick={() => { setShowSaved(false); setSelectedMode('all'); }}
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${!showSaved && selectedMode === 'all' ? 'bg-blue-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
+            className={`px-4 md:px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors whitespace-nowrap flex-shrink-0 ${!showSaved && selectedMode === 'all' ? 'bg-blue-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
           >
             All
           </button>
@@ -102,17 +102,17 @@ export const HomePage: React.FC = () => {
              <button 
              key={mode}
              onClick={() => { setShowSaved(false); setSelectedMode(mode); }}
-             className={`px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-l border-zinc-800 ${!showSaved && selectedMode === mode ? 'bg-blue-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
+             className={`px-4 md:px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-l border-zinc-800 whitespace-nowrap flex-shrink-0 ${!showSaved && selectedMode === mode ? 'bg-blue-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
            >
              {mode}
            </button>
           ))}
           <button 
             onClick={() => setShowSaved(true)}
-            className={`px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-l border-zinc-800 flex items-center gap-2 ${showSaved ? 'bg-red-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
+            className={`px-4 md:px-6 py-3 text-xs font-bold uppercase tracking-wider transition-colors border-l border-zinc-800 flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${showSaved ? 'bg-red-600 text-white' : 'bg-black text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
           >
             <Heart className={`w-4 h-4 ${showSaved ? 'fill-current' : ''}`} />
-            Saved {savedIds.length > 0 && `(${savedIds.length})`}
+            <span className="hidden sm:inline">Saved</span> {savedIds.length > 0 && `(${savedIds.length})`}
           </button>
         </div>
 
