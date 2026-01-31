@@ -1,0 +1,89 @@
+[
+  {
+    "title": "Waves 2025: BITS Goa’s Cultural Festival Sets New Standards",
+    "description": "When cultural brilliance meets coastal vibes, you get Waves – and this year’s edition proved why it’s one of…",
+    "sourceUrl": "https://dubeat.com/2025/11/24/waves-2025-bits-goas-cultural-festival-sets-new-standards/",
+    "sourceType": "scraped",
+    "organizer": "DU Beat",
+    "location": "Delhi University",
+    "mode": "offline",
+    "startDate": "2025-11-23T18:30:00.000Z",
+    "endDate": "2025-11-23T18:30:00.000Z",
+    "tags": [
+      "Cultural",
+      "Food & Drink"
+    ],
+    "ticketLink": "https://dubeat.com/2025/11/24/waves-2025-bits-goas-cultural-festival-sets-new-standards/",
+    "entryFee": "Check link for details",
+    "status": "draft"
+  },
+  {
+    "title": "Persona 2025: A Celebration of Expression and Well-being at Hindu College",
+    "description": "Friends’ Corner, the Mental Health and Counseling Cell of Hindu College, hosted one of its flagship annual events…",
+    "sourceUrl": "https://dubeat.com/2025/11/10/persona-2025-a-celebration-of-expression-and-well-being-at-hindu-college/",
+    "sourceType": "scraped",
+    "organizer": "DU Beat",
+    "location": "Delhi University",
+    "mode": "offline",
+    "startDate": "2025-11-09T18:30:00.000Z",
+    "endDate": "2025-11-09T18:30:00.000Z",
+    "tags": [
+      "College Fest",
+      "North Campus"
+    ],
+    "ticketLink": "https://dubeat.com/2025/11/10/persona-2025-a-celebration-of-expression-and-well-being-at-hindu-college/",
+    "entryFee": "Check link for details",
+    "status": "draft"
+  },
+  {
+    "title": "Fashion & Lifestyle Exhibition by Dream Events",
+    "description": "Fashion & Lifestyle Exhibition by Dream Events at Aga Khan Hall, Bhagwan Das Lane, Mandi House, New Delhi, Delhi, India",
+    "sourceUrl": "https://allevents.in/new-delhi/fashion-and-lifestyle-exhibition-by-dream-events-tickets/80001402177642",
+    "sourceType": "scraped",
+    "organizer": "AllEvents.in",
+    "location": "Aga Khan Hall, Bhagwan Das Lane, Mandi House, New Delhi, Delhi, India",
+    "mode": "offline",
+    "startDate": null,
+    "endDate": null,
+    "tags": [
+      "Food & Drink"
+    ],
+    "ticketLink": "https://allevents.in/new-delhi/fashion-and-lifestyle-exhibition-by-dream-events-tickets/80001402177642",
+    "entryFee": "Free",
+    "status": "draft"
+  },
+  {
+    "title": "Wedding Syrup Fashion, Jewellery & Lifestyle Exhibition in Ashok Hotel, Delhi",
+    "description": "Wedding Syrup Fashion, Jewellery & Lifestyle Exhibition in Ashok Hotel, Delhi at The Ashok",
+    "sourceUrl": "https://allevents.in/new-delhi/wedding-syrup-fashion-jewellery-and-lifestyle-exhibition-in-ashok-hotel-delhi-tickets/80003071202549",
+    "sourceType": "scraped",
+    "organizer": "AllEvents.in",
+    "location": "The Ashok",
+    "mode": "offline",
+    "startDate": null,
+    "endDate": null,
+    "tags": [
+      "Food & Drink"
+    ],
+    "ticketLink": "https://allevents.in/new-delhi/wedding-syrup-fashion-jewellery-and-lifestyle-exhibition-in-ashok-hotel-delhi-tickets/80003071202549",
+    "entryFee": "Free",
+    "status": "draft"
+  },
+  {
+    "title": "SEED Business School Festival 2026 - Delhi",
+    "description": "SEED Business School Festival 2026 - Delhi at The Lalit New Delhi",
+    "sourceUrl": "https://allevents.in/new-delhi/seed-business-school-festival-2026-delhi-tickets/80006097843075",
+    "sourceType": "scraped",
+    "organizer": "AllEvents.in",
+    "location": "The Lalit New Delhi",
+    "mode": "offline",
+    "startDate": null,
+    "endDate": null,
+    "tags": [
+      "Food & Drink"
+    ],
+    "ticketLink": "https://allevents.in/new-delhi/seed-business-school-festival-2026-delhi-tickets/80006097843075",
+    "entryFee": "Free",
+    "status": "draft"
+  }
+]
