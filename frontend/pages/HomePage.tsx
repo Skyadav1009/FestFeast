@@ -6,6 +6,7 @@ import { SavedEventsService } from '../services/savedEvents';
 import { FestEvent, EventStatus, EventMode } from '../types';
 import { Badge } from '../components/Badge';
 import { SaveButton } from '../components/SaveButton';
+import { ShareButton } from '../components/ShareButton';
 import { DEFAULT_TAGS } from '../constants';
 
 export const HomePage: React.FC = () => {
@@ -172,8 +173,14 @@ export const HomePage: React.FC = () => {
               key={event._id}
               className="group relative bg-black border border-zinc-800 hover:border-blue-600 transition-colors duration-200 flex flex-col h-full"
             >
-              {/* Save Button - Top Right */}
-              <div className="absolute top-4 right-4 z-10">
+              {/* Save & Share Buttons - Top Right */}
+              <div className="absolute top-4 right-4 z-10 flex gap-2">
+                <ShareButton 
+                  eventId={event._id}
+                  eventTitle={event.title}
+                  eventType="event"
+                  size="sm"
+                />
                 <SaveButton 
                   eventId={event._id} 
                   className="bg-black/80 backdrop-blur-sm rounded-full hover:bg-zinc-900"

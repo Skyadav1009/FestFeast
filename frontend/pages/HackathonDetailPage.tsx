@@ -4,6 +4,8 @@ import { ApiService } from '../services/realApi';
 import { FestEvent } from '../types';
 import { Badge } from '../components/Badge';
 import { SaveButton } from '../components/SaveButton';
+import { ShareButton } from '../components/ShareButton';
+import { useSEO } from '../hooks/useSEO';
 import { Award, ExternalLink, Clock, ShieldCheck, ArrowLeft, Tag } from 'lucide-react';
 
 export const HackathonDetailPage: React.FC = () => {
@@ -48,6 +50,13 @@ export const HackathonDetailPage: React.FC = () => {
     return days > 0 && days <= 3;
   };
 
+  // SEO meta tags for sharing
+  useSEO({
+    title: event.title,
+    description: `${event.organizer} | ${event.mode} hackathon. Register before ${new Date(event.bookingDeadline).toLocaleDateString()}`,
+    url: window.location.href
+  });
+
   return (
     <div className="max-w-4xl mx-auto">
       <Link to="/" className="inline-flex items-center text-sm text-zinc-500 hover:text-amber-500 mb-6 transition-colors">
@@ -72,6 +81,7 @@ export const HackathonDetailPage: React.FC = () => {
                   <Badge variant="filledSuccess">Open to Register</Badge>
               )}
               <SaveButton eventId={event._id} size="md" />
+              <ShareButton eventId={event._id} eventTitle={event.title} eventType="hackathon" size="md" />
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">{event.title}</h1>
             <p className="text-xl text-zinc-400 font-medium">Organized by <span className="text-zinc-200">{event.organizer}</span></p>

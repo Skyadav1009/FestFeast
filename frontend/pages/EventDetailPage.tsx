@@ -4,6 +4,8 @@ import { ApiService } from '../services/realApi';
 import { FestEvent } from '../types';
 import { Badge } from '../components/Badge';
 import { SaveButton } from '../components/SaveButton';
+import { ShareButton } from '../components/ShareButton';
+import { useSEO } from '../hooks/useSEO';
 import { Calendar, MapPin, Ticket, ExternalLink, Clock, ShieldCheck, ArrowLeft, Tag } from 'lucide-react';
 
 export const EventDetailPage: React.FC = () => {
@@ -43,6 +45,13 @@ export const EventDetailPage: React.FC = () => {
 
   const isExpired = new Date(event.endDate) < new Date();
 
+  // SEO meta tags for sharing
+  useSEO({
+    title: event.title,
+    description: `${event.organizer} | ${event.mode} event${event.location ? ` at ${event.location}` : ''}. ${event.entryFee}`,
+    url: window.location.href
+  });
+
   return (
     <div className="max-w-5xl mx-auto">
       <Link to="/" className="inline-flex items-center text-sm font-bold uppercase tracking-widest text-zinc-500 hover:text-white mb-8 transition-colors group">
@@ -64,6 +73,7 @@ export const EventDetailPage: React.FC = () => {
                   <Badge variant="filledSuccess">Upcoming</Badge>
               )}
               <SaveButton eventId={event._id} size="md" />
+              <ShareButton eventId={event._id} eventTitle={event.title} eventType="event" size="md" />
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-white mb-6 uppercase leading-none tracking-tight">{event.title}</h1>
             <p className="text-xl text-blue-500 font-mono uppercase tracking-widest">// {event.organizer}</p>
