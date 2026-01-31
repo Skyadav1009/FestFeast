@@ -94,7 +94,32 @@ class HackathonScraper extends BaseScraper {
           // Check if India/Delhi related
           const isIndia = /india|delhi|bangalore|mumbai|online|virtual/i.test(fullText);
           
-          const dateText = await this.getText('[class*="date"], time, [class*="Date"]', card);
+          // Devfolio often shows dates in various formats - try to extract from full text
+          // Look for patterns like "Feb 15 - 17, 2025" or "Ends Mar 10, 2025"
+          const datePatterns = [
+            /(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*[-–]\s*(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?[a-z]*,?\s*(\d{4})/i,
+            /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})\s*[-–]\s*(\d{1,2}),?\s*(\d{4})/i,
+            /(?:ends?|deadline|closes?)\s*:?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i,
+            /(\d{1,2})\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i
+          ];
+          
+          let dateText = await this.getText('[class*="date"], time, [class*="Date"], [class*="deadline"]', card);
+          let parsedDate = null;
+          
+          // Try extracting date from full text if card date selector fails
+          for (const pattern of datePatterns) {
+            const match = fullText.match(pattern);
+            if (match) {
+              dateText = match[0];
+              break;
+            }
+          }
+          
+          parsedDate = parseFlexibleDate(dateText);
+          
+          // Skip if date is clearly wrong (like "1 Jan" placeholder)
+          const isPlaceholderDate = /^1\s*jan$/i.test(dateText?.trim() || '');
+          
           const location = await this.getText('[class*="location"], [class*="venue"]', card) || 
                           (fullText.toLowerCase().includes('online') ? 'Online' : 'India');
           
@@ -103,12 +128,14 @@ class HackathonScraper extends BaseScraper {
             link = await card.getAttribute('href');
           }
           
-          const parsedDate = parseFlexibleDate(dateText);
+          // Determine mode based on text
+          const mode = fullText.toLowerCase().includes('online') ? 'Online' : 
+                       fullText.toLowerCase().includes('offline') ? 'Offline' : 'Hybrid';
           
           events.push({
             title: title.trim(),
-            description: '',
-            date: dateText || null,
+            description: isPlaceholderDate ? 'Date to be announced - check event link' : '',
+            date: isPlaceholderDate ? 'TBA' : (dateText || 'TBA'),
             startDate: parsedDate,
             endDate: parsedDate,
             location: location.trim(),
@@ -119,7 +146,7 @@ class HackathonScraper extends BaseScraper {
             sourceType: 'scraper',
             category: 'hackathon',
             tags: ['Hackathon', 'Tech Fest', ...extractTags(title, fullText)],
-            mode: fullText.toLowerCase().includes('online') ? 'Online' : 'Offline',
+            mode: mode,
             entryFee: 'Free',
             confidence: isIndia ? 0.9 : 0.7
           });

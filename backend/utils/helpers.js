@@ -14,6 +14,35 @@ export const generateHash = (str) => {
 };
 
 /**
+ * Check if a date string is a placeholder/invalid
+ * @param {string} dateStr - Date string
+ * @returns {boolean}
+ */
+export const isPlaceholderDate = (dateStr) => {
+  if (!dateStr) return true;
+  const cleaned = dateStr.trim().toLowerCase();
+  // Common placeholder patterns
+  return /^1\s*jan$/i.test(cleaned) || 
+         cleaned === '01 jan' || 
+         cleaned === 'tba' ||
+         cleaned === 'tbd' ||
+         cleaned === 'coming soon' ||
+         cleaned.length < 3;
+};
+
+/**
+ * Get a smart default date (null = TBA, not fake date)
+ * @param {string} dateText - Raw date text
+ * @returns {Date|null}
+ */
+export const getSmartDate = (dateText) => {
+  if (!dateText || isPlaceholderDate(dateText)) {
+    return null; // Return null for TBA dates, not fake dates
+  }
+  return parseFlexibleDate(dateText);
+};
+
+/**
  * Normalize text for comparison
  * @param {string} text - Input text
  * @returns {string} Normalized text
@@ -35,46 +64,94 @@ export const normalizeText = (text) => {
 export const parseFlexibleDate = (dateStr) => {
   if (!dateStr) return null;
   
+  // Clean the date string
+  const cleanDate = dateStr.trim().replace(/\s+/g, ' ');
+  
+  // Skip obviously invalid dates
+  if (/^1\s*jan$/i.test(cleanDate) || cleanDate === '1 JAN' || cleanDate === '01 Jan') {
+    // This is likely a placeholder/default date from the site
+    return null;
+  }
+  
   // Try standard Date parsing first
   const directParse = new Date(dateStr);
-  if (!isNaN(directParse.getTime())) {
+  if (!isNaN(directParse.getTime()) && directParse.getFullYear() >= 2024) {
     return directParse;
   }
+  
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth();
+  
+  const months = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+    january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
+    july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
+  };
   
   // Common date patterns
   const patterns = [
     // "15 Feb 2025", "15th February 2025"
-    /(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i,
-    // "Feb 15, 2025"
-    /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i,
-    // "2025-02-15"
-    /(\d{4})-(\d{2})-(\d{2})/
+    { regex: /(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i, type: 'dmy' },
+    // "Feb 15, 2025" or "February 15, 2025"
+    { regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, type: 'mdy' },
+    // "2025-02-15" ISO
+    { regex: /(\d{4})-(\d{2})-(\d{2})/, type: 'iso' },
+    // "15 Feb" or "15th Feb" (no year - assume current/next year)
+    { regex: /(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i, type: 'dm' },
+    // "Feb 15" (no year)
+    { regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?/i, type: 'md' },
+    // "15/02/2025" or "15-02-2025"
+    { regex: /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, type: 'dmySlash' },
+    // "Ends Feb 15, 2025" - extract date from longer strings
+    { regex: /(?:ends?|starts?|on|from)\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, type: 'mdy' },
   ];
   
-  const months = {
-    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
-  };
-  
-  for (const pattern of patterns) {
-    const match = dateStr.match(pattern);
+  for (const { regex, type } of patterns) {
+    const match = cleanDate.match(regex);
     if (match) {
       try {
-        if (pattern === patterns[2]) {
-          // ISO format
-          return new Date(parseInt(match[1]), parseInt(match[2]) - 1, parseInt(match[3]));
-        } else if (pattern === patterns[0]) {
-          // "15 Feb 2025"
-          const day = parseInt(match[1]);
-          const month = months[match[2].toLowerCase().substring(0, 3)];
-          const year = parseInt(match[3]);
-          return new Date(year, month, day);
-        } else if (pattern === patterns[1]) {
-          // "Feb 15, 2025"
-          const month = months[match[1].toLowerCase().substring(0, 3)];
-          const day = parseInt(match[2]);
-          const year = parseInt(match[3]);
-          return new Date(year, month, day);
+        let day, month, year;
+        
+        switch (type) {
+          case 'dmy':
+            day = parseInt(match[1]);
+            month = months[match[2].toLowerCase().substring(0, 3)];
+            year = parseInt(match[3]);
+            break;
+          case 'mdy':
+            month = months[match[1].toLowerCase().substring(0, 3)];
+            day = parseInt(match[2]);
+            year = parseInt(match[3]);
+            break;
+          case 'iso':
+            year = parseInt(match[1]);
+            month = parseInt(match[2]) - 1;
+            day = parseInt(match[3]);
+            break;
+          case 'dm':
+            day = parseInt(match[1]);
+            month = months[match[2].toLowerCase().substring(0, 3)];
+            // Assume current year, or next year if month has passed
+            year = month < currentMonth ? currentYear + 1 : currentYear;
+            break;
+          case 'md':
+            month = months[match[1].toLowerCase().substring(0, 3)];
+            day = parseInt(match[2]);
+            year = month < currentMonth ? currentYear + 1 : currentYear;
+            break;
+          case 'dmySlash':
+            day = parseInt(match[1]);
+            month = parseInt(match[2]) - 1;
+            year = parseInt(match[3]);
+            break;
+        }
+        
+        if (day && month !== undefined && year) {
+          const date = new Date(year, month, day);
+          if (!isNaN(date.getTime()) && year >= 2024) {
+            return date;
+          }
         }
       } catch (e) {
         continue;
