@@ -26,7 +26,8 @@ app.use(cors({
     'http://localhost:3000',      // CRA dev server
     'http://127.0.0.1:5173',
     'https://fest-feast-2e6q38v11-shivams-projects-726dc52b.vercel.app',  // Vercel preview
-    'https://fest-feast.vercel.app',  // Vercel production (if custom domain)
+    'https://festfeast.vercel.app',  // Vercel production
+    /\.vercel\.app$/,  // Any Vercel preview URL
     process.env.FRONTEND_URL      // Additional frontend URL from env
   ].filter(Boolean),
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
