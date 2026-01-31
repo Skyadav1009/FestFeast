@@ -39,9 +39,9 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     lg: 'w-5 h-5'
   };
 
-  // Generate shareable URL
+  // Generate shareable URL (using hash for HashRouter compatibility)
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  const shareUrl = `${baseUrl}/${eventType}/${eventId}`;
+  const shareUrl = `${baseUrl}/#/${eventType}/${eventId}`;
   const shareText = `Check out "${eventTitle}" on DelhiPulse! 🎉`;
 
   // Close menu when clicking outside
