@@ -14,6 +14,13 @@ export const HackathonDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // SEO meta tags for sharing - must be before any early returns
+  useSEO({
+    title: event?.title || 'Hackathon Details',
+    description: event ? `${event.organizer} | ${event.mode} hackathon. Register before ${new Date(event.bookingDeadline).toLocaleDateString()}` : 'Loading hackathon details...',
+    url: typeof window !== 'undefined' ? window.location.href : ''
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
@@ -49,13 +56,6 @@ export const HackathonDetailPage: React.FC = () => {
     const days = (new Date(dateStr).getTime() - new Date().getTime()) / (1000 * 3600 * 24);
     return days > 0 && days <= 3;
   };
-
-  // SEO meta tags for sharing
-  useSEO({
-    title: event.title,
-    description: `${event.organizer} | ${event.mode} hackathon. Register before ${new Date(event.bookingDeadline).toLocaleDateString()}`,
-    url: window.location.href
-  });
 
   return (
     <div className="max-w-4xl mx-auto">

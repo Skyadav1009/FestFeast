@@ -14,6 +14,13 @@ export const EventDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // SEO meta tags for sharing - must be before any early returns
+  useSEO({
+    title: event?.title || 'Event Details',
+    description: event ? `${event.organizer} | ${event.mode} event${event.location ? ` at ${event.location}` : ''}. ${event.entryFee}` : 'Loading event details...',
+    url: typeof window !== 'undefined' ? window.location.href : ''
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
@@ -44,13 +51,6 @@ export const EventDetailPage: React.FC = () => {
   );
 
   const isExpired = new Date(event.endDate) < new Date();
-
-  // SEO meta tags for sharing
-  useSEO({
-    title: event.title,
-    description: `${event.organizer} | ${event.mode} event${event.location ? ` at ${event.location}` : ''}. ${event.entryFee}`,
-    url: window.location.href
-  });
 
   return (
     <div className="max-w-5xl mx-auto">
