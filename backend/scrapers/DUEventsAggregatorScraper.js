@@ -58,6 +58,21 @@ class DUEventsAggregatorScraper extends BaseScraper {
         name: 'Your Space DU Fests',
         url: 'https://www.your-space.in/blogs/best-delhi-university-college-festivals/',
         type: 'blog'
+      },
+      {
+        name: 'EventGlint Delhi',
+        url: 'https://www.eventglint.com/in/delhi',
+        type: 'listing'
+      },
+      {
+        name: 'AllEvents New Delhi',
+        url: 'https://allevents.in/new-delhi',
+        type: 'listing'
+      },
+      {
+        name: 'Instagram DU Fest',
+        url: 'https://www.instagram.com/du_fest_/',
+        type: 'instagram'
       }
     ];
   }
@@ -95,6 +110,15 @@ class DUEventsAggregatorScraper extends BaseScraper {
             break;
           case 'Your Space DU Fests':
             events = await this.scrapeYourSpace();
+            break;
+          case 'EventGlint Delhi':
+            events = await this.scrapeEventGlint();
+            break;
+          case 'AllEvents New Delhi':
+            events = await this.scrapeAllEventsNewDelhi();
+            break;
+          case 'Instagram DU Fest':
+            events = await this.scrapeInstagramDUFest();
             break;
           default:
             events = await this.scrapeGenericNews(source.url, source.name);
@@ -587,6 +611,233 @@ class DUEventsAggregatorScraper extends BaseScraper {
       }
     } catch (error) {
       this.logError('Your Space DU Fests scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape EventGlint Delhi
+   */
+  async scrapeEventGlint() {
+    const events = [];
+    
+    try {
+      await this.navigate('https://www.eventglint.com/in/delhi');
+      await this.waitForSelector('.event-card, .event, article, .card, .listing', 8000);
+      
+      const cards = await this.page.$$('.event-card, .event-item, article, .card, a[href*="event"]');
+      logger.info(`[${this.name}] Found ${cards.length} items on EventGlint`);
+      
+      for (const card of cards.slice(0, 15)) {
+        try {
+          const title = await card.$eval(
+            'h2, h3, h4, .title, .event-title, .name',
+            el => el.textContent?.trim()
+          ).catch(async () => {
+            return await card.evaluate(el => el.textContent?.trim()?.substring(0, 100));
+          });
+          
+          const link = await card.evaluate(el => {
+            if (el.tagName === 'A') return el.href;
+            const a = el.querySelector('a');
+            return a ? a.href : null;
+          });
+          
+          const dateText = await card.$eval(
+            '.date, .event-date, time, .when, .schedule',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const location = await card.$eval(
+            '.location, .venue, .place, .where',
+            el => el.textContent?.trim()
+          ).catch(() => 'Delhi');
+          
+          if (title && link && title.length > 5) {
+            events.push({
+              title: this.cleanTitle(title),
+              description: `Event from EventGlint: ${title}`,
+              sourceUrl: link,
+              sourceType: 'scraped',
+              organizer: 'EventGlint',
+              location: location || 'Delhi',
+              mode: 'offline',
+              startDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+              tags: extractTags(title),
+              ticketLink: link,
+              entryFee: 'Check link for details',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+    } catch (error) {
+      this.logError('EventGlint scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape AllEvents New Delhi (different from allevents.in/delhi/all)
+   */
+  async scrapeAllEventsNewDelhi() {
+    const events = [];
+    
+    try {
+      await this.navigate('https://allevents.in/new-delhi');
+      await this.waitForSelector('.event-card, .event-item, article, li[itemtype*="Event"]', 8000);
+      
+      const cards = await this.page.$$('.event-card, .event-item, article, .item, [itemtype*="Event"]');
+      logger.info(`[${this.name}] Found ${cards.length} items on AllEvents New Delhi`);
+      
+      for (const card of cards.slice(0, 15)) {
+        try {
+          const title = await card.$eval(
+            'h2, h3, h4, .title, .event-title, a[itemprop="url"]',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          const link = await card.$eval('a', el => el.href).catch(() => null);
+          
+          const dateText = await card.$eval(
+            '.date, time, [itemprop="startDate"], .event-date',
+            el => el.textContent?.trim() || el.getAttribute('content')
+          ).catch(() => null);
+          
+          const location = await card.$eval(
+            '.venue, .location, [itemprop="location"]',
+            el => el.textContent?.trim()
+          ).catch(() => 'New Delhi');
+          
+          if (title && link && title.length > 5) {
+            events.push({
+              title: this.cleanTitle(title),
+              description: `Event in New Delhi: ${title}`,
+              sourceUrl: link,
+              sourceType: 'scraped',
+              organizer: 'AllEvents',
+              location: location || 'New Delhi',
+              mode: 'offline',
+              startDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: dateText ? parseFlexibleDate(dateText) : new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+              tags: extractTags(title),
+              ticketLink: link,
+              entryFee: 'Check link for details',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip
+        }
+      }
+    } catch (error) {
+      this.logError('AllEvents New Delhi scraping failed', error);
+    }
+    
+    return events;
+  }
+
+  /**
+   * Scrape Instagram DU Fest page
+   * NOTE: Instagram is very restrictive - this may not work reliably
+   * Instagram blocks most scraping attempts and requires login
+   */
+  async scrapeInstagramDUFest() {
+    const events = [];
+    
+    try {
+      logger.info(`[${this.name}] Attempting Instagram scrape (may be blocked)...`);
+      
+      await this.navigate('https://www.instagram.com/du_fest_/');
+      
+      // Wait for page to load - Instagram uses heavy JS
+      await sleep(5000);
+      
+      // Check if we got a login wall
+      const loginWall = await this.page.$('input[name="username"], [href*="accounts/login"]');
+      if (loginWall) {
+        logger.warn(`[${this.name}] Instagram login wall detected - public scraping limited`);
+      }
+      
+      // Try to find post previews or descriptions on public profile
+      // Instagram structure changes often, so we try multiple selectors
+      const postSelectors = [
+        'article a[href*="/p/"]',
+        'a[href*="/p/"]',
+        'div[role="button"] img',
+        'article img'
+      ];
+      
+      let posts = [];
+      for (const selector of postSelectors) {
+        posts = await this.page.$$(selector);
+        if (posts.length > 0) break;
+      }
+      
+      logger.info(`[${this.name}] Found ${posts.length} posts on Instagram DU Fest`);
+      
+      // Try to get alt text from images or link info
+      for (const post of posts.slice(0, 10)) {
+        try {
+          const altText = await post.evaluate(el => {
+            if (el.tagName === 'IMG') return el.alt;
+            const img = el.querySelector('img');
+            return img ? img.alt : null;
+          });
+          
+          const link = await post.evaluate(el => {
+            if (el.tagName === 'A') return el.href;
+            const a = el.closest('a');
+            return a ? a.href : 'https://www.instagram.com/du_fest_/';
+          });
+          
+          // Only add if alt text contains event-like keywords
+          if (altText && altText.length > 10 && this.isEventRelated(altText)) {
+            events.push({
+              title: this.cleanTitle(altText.substring(0, 100)),
+              description: altText,
+              sourceUrl: link,
+              sourceType: 'scraped',
+              organizer: 'DU Fest (Instagram)',
+              location: 'Delhi University',
+              mode: 'offline',
+              startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              endDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+              category: 'cultural',
+              tags: ['du fest', 'delhi university', 'instagram', ...extractTags(altText)],
+              ticketLink: 'https://www.instagram.com/du_fest_/',
+              entryFee: 'Check Instagram for details',
+              status: 'published'
+            });
+          }
+        } catch (e) {
+          // Skip this post
+        }
+      }
+      
+      // If no events found from posts, try to get bio info
+      if (events.length === 0) {
+        try {
+          const bioText = await this.page.$eval(
+            'header section span, .-vDIg span, [class*="bio"]',
+            el => el.textContent?.trim()
+          ).catch(() => null);
+          
+          if (bioText && bioText.length > 20) {
+            logger.info(`[${this.name}] Got Instagram bio: ${bioText.substring(0, 50)}...`);
+          }
+        } catch (e) {
+          // Bio not accessible
+        }
+      }
+      
+    } catch (error) {
+      this.logError('Instagram DU Fest scraping failed (expected - Instagram blocks scrapers)', error);
     }
     
     return events;
