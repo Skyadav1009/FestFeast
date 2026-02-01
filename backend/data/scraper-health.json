@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-02-01T06:20:41.485Z",
+  "lastUpdated": "2026-02-01T06:21:11.178Z",
   "sources": {
     "DUFestScraper": {
       "name": "DUFestScraper",
@@ -76,13 +76,18 @@
     "EventSiteScraper": {
       "name": "EventSiteScraper",
       "status": "healthy",
-      "lastSuccess": "2026-02-01T06:11:25.938Z",
+      "lastSuccess": "2026-02-01T06:21:11.178Z",
       "lastFailure": null,
       "consecutiveFailures": 0,
-      "totalSuccesses": 11,
+      "totalSuccesses": 12,
       "totalFailures": 0,
       "averageEvents": 35,
       "history": [
+        {
+          "timestamp": "2026-02-01T06:21:11.178Z",
+          "success": true,
+          "eventsCount": 35
+        },
         {
           "timestamp": "2026-02-01T06:11:25.938Z",
           "success": true,
