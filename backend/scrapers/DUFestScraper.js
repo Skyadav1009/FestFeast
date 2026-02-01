@@ -1,7 +1,7 @@
 /**
  * DU Fest Scraper
  * Scrapes Delhi University college fest announcements
- * Sources: College websites, student union pages, fest sites
+ * Sources: Devfolio, Eventbrite, AllEvents (working alternatives)
  */
 
 import BaseScraper from './BaseScraper.js';
@@ -11,17 +11,23 @@ import { parseFlexibleDate, categorizeEvent, extractTags, sleep } from '../utils
 class DUFestScraper extends BaseScraper {
   constructor() {
     super('DUFestScraper');
-    
+
     // DU College fest sources
+    // NOTE: Unstop and Dare2Compete now require login, using alternatives
     this.sources = [
       {
-        name: 'Fest Tracker',
-        url: 'https://unstop.com/college-fests',
+        name: 'Devfolio Fests',
+        url: 'https://devfolio.co/hackathons',
         type: 'listing'
       },
       {
-        name: 'D2C Events',
-        url: 'https://dare2compete.com/festival',
+        name: 'Eventbrite Delhi Fests',
+        url: 'https://www.eventbrite.com/d/india--new-delhi/college/',
+        type: 'listing'
+      },
+      {
+        name: 'AllEvents College',
+        url: 'https://allevents.in/delhi/college',
         type: 'listing'
       }
     ];
@@ -29,88 +35,78 @@ class DUFestScraper extends BaseScraper {
 
   async scrape() {
     const allEvents = [];
-    
+
     for (const source of this.sources) {
       try {
         logger.info(`[${this.name}] Scraping: ${source.name}`);
-        
+
         let events = [];
-        
-        if (source.name === 'Fest Tracker') {
-          events = await this.scrapeUnstop();
-        } else if (source.name === 'D2C Events') {
-          events = await this.scrapeDare2Compete();
+
+        switch (source.name) {
+          case 'Devfolio Fests':
+            events = await this.scrapeDevfolioFests();
+            break;
+          case 'Eventbrite Delhi Fests':
+            events = await this.scrapeEventbriteFests();
+            break;
+          case 'AllEvents College':
+            events = await this.scrapeAllEventsCollege();
+            break;
         }
-        
+
         allEvents.push(...events);
-        
+
         // Polite delay between sources
         await sleep(2000);
-        
+
       } catch (error) {
         this.logError(`Failed to scrape ${source.name}`, error);
       }
     }
-    
+
     return allEvents;
   }
 
   /**
-   * Scrape Unstop (formerly Dare2Compete) college fests
+   * Scrape Devfolio for college fests/hackathons
    */
-  async scrapeUnstop() {
+  async scrapeDevfolioFests() {
     const events = [];
-    
+
     try {
-      await this.navigate('https://unstop.com/college-fests');
-      
-      // Wait for fest cards to load
-      const loaded = await this.waitForSelector('.fest-card, .opportunity-card, [class*="festival"]', 10000);
-      
-      if (!loaded) {
-        // Try alternate approach - scroll and wait
-        await this.page.evaluate(() => window.scrollTo(0, 1000));
-        await sleep(2000);
+      await this.navigate('https://devfolio.co/hackathons');
+
+      // Wait for hackathon cards to load
+      await this.waitForSelector('[class*="HackathonCard"], [class*="Card"]', 10000);
+
+      // Scroll to load more
+      for (let i = 0; i < 2; i++) {
+        await this.page.evaluate(() => window.scrollBy(0, 1000));
+        await sleep(1000);
       }
-      
-      // Try multiple selectors for fest cards
-      const selectors = [
-        '.fest-card',
-        '.opportunity-card',
-        '[class*="festival-card"]',
-        '.MuiCard-root',
-        'article'
-      ];
-      
-      let cards = [];
-      for (const selector of selectors) {
-        cards = await this.page.$$(selector);
-        if (cards.length > 0) break;
-      }
-      
-      logger.info(`[${this.name}] Found ${cards.length} potential fest cards on Unstop`);
-      
-      for (const card of cards.slice(0, 20)) { // Limit to 20
+
+      const cards = await this.page.$$('[class*="HackathonCard"], [class*="Card"]');
+      logger.info(`[${this.name}] Found ${cards.length} events on Devfolio`);
+
+      for (const card of cards.slice(0, 15)) {
         try {
-          // Extract title
-          const title = await this.getText('h3, h2, [class*="title"], .card-title', card) ||
-                       await this.getText('a', card);
-          
+          const title = await this.getText('h3, h2, [class*="name"], [class*="title"]', card);
           if (!title || title.length < 5) continue;
-          
-          // Skip if not Delhi/NCR related (basic filter)
+
           const fullText = await card.textContent() || '';
-          const isDelhiNCR = /delhi|ncr|gurgaon|noida|greater noida|du |hindu|srcc|stephens|hansraj|ramjas|lsr|venky|gargi|jesus|miranda|dtu|nsit|iiit|igdtuw/i.test(fullText);
-          
-          // Extract other details
-          const dateText = await this.getText('[class*="date"], .date, time', card);
-          const location = await this.getText('[class*="location"], .location, [class*="venue"]', card) || 'Delhi NCR';
-          const link = await this.getAttribute('a', 'href', card);
-          const organizer = await this.getText('[class*="organizer"], [class*="college"], .org', card);
-          
-          // Parse date
+
+          // Filter for India/Delhi related events
+          const isIndia = /india|delhi|bangalore|mumbai|online|virtual|college|university/i.test(fullText);
+          if (!isIndia) continue;
+
+          const dateText = await this.getText('[class*="date"], time', card);
+          const location = await this.getText('[class*="location"], [class*="venue"]', card) || 'India';
+          let link = await this.getAttribute('a', 'href', card);
+          if (!link) link = await card.getAttribute('href');
+
           const parsedDate = parseFlexibleDate(dateText);
-          
+          const eventUrl = link?.startsWith('http') ? link : `https://devfolio.co${link || ''}`;
+
           events.push({
             title: title.trim(),
             description: '',
@@ -119,9 +115,138 @@ class DUFestScraper extends BaseScraper {
             endDate: parsedDate,
             location: location.trim(),
             venue: location.trim(),
-            organizer: organizer.trim(),
-            link: link.startsWith('http') ? link : `https://unstop.com${link}`,
-            source: 'Unstop',
+            organizer: 'Devfolio',
+            link: eventUrl,
+            source: 'Devfolio',
+            sourceType: 'scraper',
+            category: categorizeEvent(title, fullText),
+            tags: ['College Fest', ...extractTags(title, fullText)],
+            mode: fullText.toLowerCase().includes('online') ? 'Online' : 'Offline',
+            entryFee: 'Free',
+            confidence: 0.85
+          });
+
+        } catch (error) {
+          this.logError('Error parsing Devfolio card', error);
+        }
+      }
+
+    } catch (error) {
+      this.logError('Devfolio Fests scraping failed', error);
+    }
+
+    return events;
+  }
+
+  /**
+   * Scrape Eventbrite for Delhi college events
+   */
+  async scrapeEventbriteFests() {
+    const events = [];
+
+    try {
+      await this.navigate('https://www.eventbrite.com/d/india--new-delhi/college/');
+
+      // Wait for event cards
+      await this.waitForSelector('[class*="event-card"], article', 10000);
+
+      // Scroll to load more
+      await this.page.evaluate(() => window.scrollBy(0, 1500));
+      await sleep(2000);
+
+      const cards = await this.page.$$('[class*="event-card"]');
+      logger.info(`[${this.name}] Found ${cards.length} events on Eventbrite`);
+
+      for (const card of cards.slice(0, 20)) {
+        try {
+          const title = await this.getText('h3, h2, [class*="title"]', card);
+          if (!title || title.length < 5) continue;
+
+          const fullText = await card.textContent() || '';
+          const dateText = await this.getText('time, [class*="date"]', card);
+          const location = await this.getText('[class*="location"], [class*="venue"]', card) || 'Delhi NCR';
+          let link = await this.getAttribute('a', 'href', card);
+
+          const parsedDate = parseFlexibleDate(dateText);
+          const eventUrl = link?.startsWith('http') ? link : `https://www.eventbrite.com${link || ''}`;
+
+          events.push({
+            title: title.trim(),
+            description: '',
+            date: dateText || null,
+            startDate: parsedDate,
+            endDate: parsedDate,
+            location: location.trim(),
+            venue: location.trim(),
+            organizer: 'Eventbrite',
+            link: eventUrl,
+            source: 'Eventbrite',
+            sourceType: 'scraper',
+            category: categorizeEvent(title, fullText),
+            tags: extractTags(title, fullText),
+            mode: fullText.toLowerCase().includes('online') ? 'Online' : 'Offline',
+            entryFee: fullText.toLowerCase().includes('free') ? 'Free' : 'Check website',
+            confidence: 0.8
+          });
+
+        } catch (error) {
+          this.logError('Error parsing Eventbrite card', error);
+        }
+      }
+
+    } catch (error) {
+      this.logError('Eventbrite Fests scraping failed', error);
+    }
+
+    return events;
+  }
+
+  /**
+   * Scrape AllEvents for college events in Delhi
+   */
+  async scrapeAllEventsCollege() {
+    const events = [];
+
+    try {
+      await this.navigate('https://allevents.in/delhi/college');
+
+      // Wait for event cards
+      await this.waitForSelector('.event-card, .event-item, article', 10000);
+
+      // Scroll to load more
+      await this.page.evaluate(() => window.scrollBy(0, 1000));
+      await sleep(1000);
+
+      const cards = await this.page.$$('.event-card');
+      logger.info(`[${this.name}] Found ${cards.length} events on AllEvents College`);
+
+      for (const card of cards.slice(0, 20)) {
+        try {
+          const title = await this.getText('h3, h2, .title', card);
+          if (!title || title.length < 5) continue;
+
+          const fullText = await card.textContent() || '';
+
+          // Filter for Delhi NCR related events
+          const isDelhiNCR = /delhi|ncr|gurgaon|noida|du |hindu|srcc|stephens|hansraj|ramjas|lsr|venky|gargi|miranda|dtu|nsit|iiit|igdtuw/i.test(fullText);
+
+          const dateText = await this.getText('[class*="date"], .date, time', card);
+          const location = await this.getText('[class*="location"], .location, .venue', card) || 'Delhi NCR';
+          const link = await this.getAttribute('a', 'href', card);
+
+          const parsedDate = parseFlexibleDate(dateText);
+
+          events.push({
+            title: title.trim(),
+            description: '',
+            date: dateText || null,
+            startDate: parsedDate,
+            endDate: parsedDate,
+            location: location.trim(),
+            venue: location.trim(),
+            organizer: 'AllEvents',
+            link: link?.startsWith('http') ? link : `https://allevents.in${link || ''}`,
+            source: 'AllEvents',
             sourceType: 'scraper',
             category: categorizeEvent(title, fullText),
             tags: extractTags(title, fullText),
@@ -129,75 +254,16 @@ class DUFestScraper extends BaseScraper {
             entryFee: fullText.toLowerCase().includes('free') ? 'Free' : 'Check website',
             confidence: isDelhiNCR ? 0.9 : 0.6
           });
-          
-        } catch (error) {
-          this.logError('Error parsing Unstop card', error);
-        }
-      }
-      
-    } catch (error) {
-      this.logError('Unstop scraping failed', error);
-    }
-    
-    return events;
-  }
 
-  /**
-   * Scrape Dare2Compete festivals
-   */
-  async scrapeDare2Compete() {
-    const events = [];
-    
-    try {
-      await this.navigate('https://dare2compete.com/festival');
-      
-      await this.waitForSelector('.festival-card, .event-card, article', 10000);
-      
-      const cards = await this.page.$$('.festival-card, .event-card, article, .card');
-      
-      logger.info(`[${this.name}] Found ${cards.length} potential cards on D2C`);
-      
-      for (const card of cards.slice(0, 15)) {
-        try {
-          const title = await this.getText('h3, h2, .title, a', card);
-          if (!title || title.length < 5) continue;
-          
-          const fullText = await card.textContent() || '';
-          const dateText = await this.getText('.date, time, [class*="date"]', card);
-          const location = await this.getText('.location, [class*="venue"]', card) || 'Delhi NCR';
-          const link = await this.getAttribute('a', 'href', card);
-          const organizer = await this.getText('.organizer, .college, .org', card);
-          
-          const parsedDate = parseFlexibleDate(dateText);
-          
-          events.push({
-            title: title.trim(),
-            description: '',
-            date: dateText || null,
-            startDate: parsedDate,
-            endDate: parsedDate,
-            location: location.trim(),
-            venue: location.trim(),
-            organizer: organizer.trim(),
-            link: link?.startsWith('http') ? link : `https://dare2compete.com${link || ''}`,
-            source: 'Dare2Compete',
-            sourceType: 'scraper',
-            category: categorizeEvent(title, fullText),
-            tags: extractTags(title, fullText),
-            mode: fullText.toLowerCase().includes('online') ? 'Online' : 'Offline',
-            entryFee: 'Check website',
-            confidence: 0.8
-          });
-          
         } catch (error) {
-          this.logError('Error parsing D2C card', error);
+          this.logError('Error parsing AllEvents card', error);
         }
       }
-      
+
     } catch (error) {
-      this.logError('D2C scraping failed', error);
+      this.logError('AllEvents College scraping failed', error);
     }
-    
+
     return events;
   }
 }

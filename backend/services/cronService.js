@@ -5,8 +5,10 @@
 
 import cron from 'node-cron';
 import scraperService from './scraperService.js';
+import { runValidationNow } from './validationCron.js';
 import Event from '../models/Event.js';
 import logger from '../utils/logger.js';
+import { clearOldAlerts, generateHealthReport } from '../utils/healthMonitor.js';
 
 class CronService {
   constructor() {
@@ -29,10 +31,10 @@ class CronService {
     // Use SCRAPE_INTERVAL_MINUTES for minute intervals, or SCRAPE_INTERVAL_HOURS for hours
     const scrapeIntervalMinutes = process.env.SCRAPE_INTERVAL_MINUTES;
     const scrapeIntervalHours = process.env.SCRAPE_INTERVAL_HOURS || 6;
-    
+
     let cronExpression;
     let intervalLabel;
-    
+
     if (scrapeIntervalMinutes) {
       // Run every X minutes
       cronExpression = `*/${scrapeIntervalMinutes} * * * *`;
@@ -42,7 +44,7 @@ class CronService {
       cronExpression = `0 */${scrapeIntervalHours} * * *`;
       intervalLabel = `Every ${scrapeIntervalHours} hours`;
     }
-    
+
     const scrapeJob = cron.schedule(cronExpression, async () => {
       logger.info(`[CRON] Running scheduled scrape (${intervalLabel})`);
       try {
@@ -54,7 +56,7 @@ class CronService {
       scheduled: true,
       timezone: 'Asia/Kolkata'
     });
-    
+
     this.jobs.push({ name: 'scraper', job: scrapeJob, interval: intervalLabel });
 
     // Auto-expire events - daily at midnight
@@ -70,23 +72,45 @@ class CronService {
       scheduled: true,
       timezone: 'Asia/Kolkata'
     });
-    
+
     this.jobs.push({ name: 'expiry', job: expireJob, interval: 'Daily at midnight' });
+
+    // Weekly source validation - Sunday at 3 AM
+    const validationJob = cron.schedule('0 3 * * 0', async () => {
+      logger.info('[CRON] Running weekly source validation');
+      try {
+        await runValidationNow();
+        // Clear old alerts during weekly validation
+        clearOldAlerts();
+      } catch (error) {
+        logger.error(`[CRON] Source validation failed: ${error.message}`);
+      }
+    }, {
+      scheduled: true,
+      timezone: 'Asia/Kolkata'
+    });
+
+    this.jobs.push({ name: 'validation', job: validationJob, interval: 'Weekly on Sunday at 3 AM' });
 
     // Health check log - every hour
     const healthJob = cron.schedule('0 * * * *', () => {
       const status = scraperService.getStatus();
       logger.debug(`[CRON] Health check - Scraper runs: ${status.stats.totalRuns}, Last run: ${status.lastRun || 'Never'}`);
+
+      // Log brief health status
+      if (status.health && status.health.status !== 'healthy') {
+        logger.warn(`[CRON] Scraper health: ${status.health.status} - ${status.health.summary.critical} critical, ${status.health.summary.warning} warning`);
+      }
     }, {
       scheduled: true,
       timezone: 'Asia/Kolkata'
     });
-    
+
     this.jobs.push({ name: 'health', job: healthJob, interval: 'Every hour' });
 
     this.isInitialized = true;
     logger.info(`Cron service initialized with ${this.jobs.length} jobs`);
-    
+
     // Log registered jobs
     this.jobs.forEach(({ name, interval }) => {
       logger.info(`  - ${name}: ${interval}`);
@@ -131,6 +155,8 @@ class CronService {
         return await scraperService.runAll();
       case 'expiry':
         return await Event.autoExpireEvents();
+      case 'validation':
+        return await runValidationNow();
       default:
         throw new Error(`Unknown job: ${jobName}`);
     }

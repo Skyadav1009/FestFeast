@@ -12,6 +12,7 @@ import {
   DUEventsAggregatorScraper
 } from '../scrapers/index.js';
 import logger from '../utils/logger.js';
+import { recordSuccess, recordFailure, getHealthStatus, generateHealthReport } from '../utils/healthMonitor.js';
 
 class ScraperService {
   constructor() {
@@ -24,7 +25,7 @@ class ScraperService {
       // InstagramScraper is limited without API access, enable if needed
       // new InstagramScraper()
     ];
-    
+
     this.isRunning = false;
     this.lastRun = null;
     this.stats = {
@@ -43,15 +44,15 @@ class ScraperService {
   async runAll() {
     if (this.isRunning) {
       logger.warn('Scraper already running, skipping...');
-      return { 
-        success: false, 
-        message: 'Scraper already in progress' 
+      return {
+        success: false,
+        message: 'Scraper already in progress'
       };
     }
 
     this.isRunning = true;
     const startTime = Date.now();
-    
+
     const results = {
       success: true,
       startedAt: new Date().toISOString(),
@@ -73,10 +74,13 @@ class ScraperService {
       for (const scraper of this.scrapers) {
         try {
           const scraperResult = await scraper.run();
-          
+
           // Process and store events
           const storageResult = await this.storeEvents(scraperResult.results);
-          
+
+          // Record success in health monitor
+          recordSuccess(scraperResult.meta.scraper, scraperResult.meta.eventsFound);
+
           results.scrapers.push({
             name: scraperResult.meta.scraper,
             duration: scraperResult.meta.duration,
@@ -85,14 +89,18 @@ class ScraperService {
             duplicates: storageResult.duplicateCount,
             errors: scraperResult.meta.errorsCount
           });
-          
+
           results.totals.eventsFound += scraperResult.meta.eventsFound;
           results.totals.newEvents += storageResult.newCount;
           results.totals.duplicates += storageResult.duplicateCount;
           results.totals.errors += scraperResult.meta.errorsCount;
-          
+
         } catch (error) {
           logger.error(`Scraper ${scraper.name} failed: ${error.message}`);
+
+          // Record failure in health monitor
+          recordFailure(scraper.name, error.message);
+
           results.scrapers.push({
             name: scraper.name,
             error: error.message
@@ -113,7 +121,7 @@ class ScraperService {
       this.stats.totalNewEvents += results.totals.newEvents;
       this.stats.totalDuplicates += results.totals.duplicates;
       this.stats.totalErrors += results.totals.errors;
-      
+
       this.lastRun = new Date();
 
     } catch (error) {
@@ -152,7 +160,7 @@ class ScraperService {
         if (!eventData.title) continue;
 
         const { event, isNew } = await Event.findOrCreate(eventData);
-        
+
         if (isNew) {
           newCount++;
           stored.push(event);
@@ -160,7 +168,7 @@ class ScraperService {
         } else {
           duplicateCount++;
         }
-        
+
       } catch (error) {
         // Handle duplicate key errors gracefully
         if (error.code === 11000) {
@@ -180,43 +188,72 @@ class ScraperService {
    * @returns {Promise<Object>}
    */
   async runScraper(scraperName) {
-    const scraper = this.scrapers.find(s => 
+    const scraper = this.scrapers.find(s =>
       s.name.toLowerCase() === scraperName.toLowerCase()
     );
-    
+
     if (!scraper) {
-      return { 
-        success: false, 
-        error: `Scraper '${scraperName}' not found` 
+      return {
+        success: false,
+        error: `Scraper '${scraperName}' not found`
       };
     }
 
     logger.info(`Running single scraper: ${scraperName}`);
-    
-    const result = await scraper.run();
-    const storageResult = await this.storeEvents(result.results);
-    
-    return {
-      success: true,
-      scraper: scraperName,
-      eventsFound: result.meta.eventsFound,
-      newEvents: storageResult.newCount,
-      duplicates: storageResult.duplicateCount,
-      errors: result.errors
-    };
+
+    try {
+      const result = await scraper.run();
+      const storageResult = await this.storeEvents(result.results);
+
+      // Record success
+      recordSuccess(scraperName, result.meta.eventsFound);
+
+      return {
+        success: true,
+        scraper: scraperName,
+        eventsFound: result.meta.eventsFound,
+        newEvents: storageResult.newCount,
+        duplicates: storageResult.duplicateCount,
+        errors: result.errors
+      };
+    } catch (error) {
+      // Record failure
+      recordFailure(scraperName, error.message);
+
+      return {
+        success: false,
+        scraper: scraperName,
+        error: error.message
+      };
+    }
   }
 
   /**
-   * Get service status
+   * Get service status including health metrics
    * @returns {Object}
    */
   getStatus() {
+    const health = getHealthStatus();
+
     return {
       isRunning: this.isRunning,
       lastRun: this.lastRun,
       stats: this.stats,
-      scrapers: this.scrapers.map(s => s.name)
+      scrapers: this.scrapers.map(s => s.name),
+      health: {
+        status: health.status,
+        summary: health.summary,
+        recentAlerts: health.recentAlerts
+      }
     };
+  }
+
+  /**
+   * Get detailed health report
+   * @returns {string}
+   */
+  getHealthReport() {
+    return generateHealthReport();
   }
 }
 

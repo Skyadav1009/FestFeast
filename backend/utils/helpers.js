@@ -22,12 +22,12 @@ export const isPlaceholderDate = (dateStr) => {
   if (!dateStr) return true;
   const cleaned = dateStr.trim().toLowerCase();
   // Common placeholder patterns
-  return /^1\s*jan$/i.test(cleaned) || 
-         cleaned === '01 jan' || 
-         cleaned === 'tba' ||
-         cleaned === 'tbd' ||
-         cleaned === 'coming soon' ||
-         cleaned.length < 3;
+  return /^1\s*jan$/i.test(cleaned) ||
+    cleaned === '01 jan' ||
+    cleaned === 'tba' ||
+    cleaned === 'tbd' ||
+    cleaned === 'coming soon' ||
+    cleaned.length < 3;
 };
 
 /**
@@ -63,33 +63,56 @@ export const normalizeText = (text) => {
  */
 export const parseFlexibleDate = (dateStr) => {
   if (!dateStr) return null;
-  
+
   // Clean the date string
   const cleanDate = dateStr.trim().replace(/\s+/g, ' ');
-  
+
   // Skip obviously invalid dates
   if (/^1\s*jan$/i.test(cleanDate) || cleanDate === '1 JAN' || cleanDate === '01 Jan') {
-    // This is likely a placeholder/default date from the site
     return null;
   }
-  
+
+  // Handle relative dates first
+  const today = new Date();
+  const lowerDate = cleanDate.toLowerCase();
+
+  if (lowerDate === 'today' || lowerDate === 'tonight') {
+    return today;
+  }
+  if (lowerDate === 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  }
+  if (lowerDate.includes('next week') || lowerDate.includes('this week')) {
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    return nextWeek;
+  }
+  if (lowerDate.includes('this weekend')) {
+    const daysUntilSaturday = (6 - today.getDay() + 7) % 7 || 7;
+    const weekend = new Date(today);
+    weekend.setDate(weekend.getDate() + daysUntilSaturday);
+    return weekend;
+  }
+
   // Try standard Date parsing first
   const directParse = new Date(dateStr);
   if (!isNaN(directParse.getTime()) && directParse.getFullYear() >= 2024) {
     return directParse;
   }
-  
+
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth();
-  
+
   const months = {
     jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
     jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
     january: 0, february: 1, march: 2, april: 3, may: 4, june: 5,
     july: 6, august: 7, september: 8, october: 9, november: 10, december: 11
   };
-  
-  // Common date patterns
+
+  // Common date patterns (in order of priority)
   const patterns = [
     // "15 Feb 2025", "15th February 2025"
     { regex: /(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i, type: 'dmy' },
@@ -97,22 +120,29 @@ export const parseFlexibleDate = (dateStr) => {
     { regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, type: 'mdy' },
     // "2025-02-15" ISO
     { regex: /(\d{4})-(\d{2})-(\d{2})/, type: 'iso' },
+    // Date ranges: "Feb 15 - 17, 2025" or "15 - 17 Feb 2025" (extract start date)
+    { regex: /(\d{1,2})(?:st|nd|rd|th)?\s*[-–]\s*\d{1,2}(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*,?\s*(\d{4})/i, type: 'dmy' },
+    { regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})\s*[-–]\s*\d{1,2},?\s*(\d{4})/i, type: 'mdy' },
+    // "15/02/2025" or "15-02-2025"
+    { regex: /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, type: 'dmySlash' },
+    // "2025/02/15"
+    { regex: /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, type: 'ymd' },
+    // "Sat, 21 Feb • 02:00 PM" (AllEvents format)
+    { regex: /(?:Sun|Mon|Tue|Wed|Thu|Fri|Sat)[a-z]*,?\s+(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i, type: 'dm' },
+    // "Ends Feb 15, 2025" - extract date from longer strings
+    { regex: /(?:ends?|starts?|on|from|deadline)\s*:?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, type: 'mdy' },
     // "15 Feb" or "15th Feb" (no year - assume current/next year)
     { regex: /(\d{1,2})(?:st|nd|rd|th)?\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*/i, type: 'dm' },
     // "Feb 15" (no year)
     { regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})(?:st|nd|rd|th)?/i, type: 'md' },
-    // "15/02/2025" or "15-02-2025"
-    { regex: /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, type: 'dmySlash' },
-    // "Ends Feb 15, 2025" - extract date from longer strings
-    { regex: /(?:ends?|starts?|on|from)\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}),?\s+(\d{4})/i, type: 'mdy' },
   ];
-  
+
   for (const { regex, type } of patterns) {
     const match = cleanDate.match(regex);
     if (match) {
       try {
         let day, month, year;
-        
+
         switch (type) {
           case 'dmy':
             day = parseInt(match[1]);
@@ -125,6 +155,11 @@ export const parseFlexibleDate = (dateStr) => {
             year = parseInt(match[3]);
             break;
           case 'iso':
+            year = parseInt(match[1]);
+            month = parseInt(match[2]) - 1;
+            day = parseInt(match[3]);
+            break;
+          case 'ymd':
             year = parseInt(match[1]);
             month = parseInt(match[2]) - 1;
             day = parseInt(match[3]);
@@ -146,8 +181,12 @@ export const parseFlexibleDate = (dateStr) => {
             year = parseInt(match[3]);
             break;
         }
-        
+
         if (day && month !== undefined && year) {
+          // Validate day is in valid range
+          if (day < 1 || day > 31) continue;
+          if (month < 0 || month > 11) continue;
+
           const date = new Date(year, month, day);
           if (!isNaN(date.getTime()) && year >= 2024) {
             return date;
@@ -158,8 +197,61 @@ export const parseFlexibleDate = (dateStr) => {
       }
     }
   }
-  
+
   return null;
+};
+
+/**
+ * Parse date range and return start and end dates
+ * @param {string} dateStr - Date string that may contain a range
+ * @returns {{start: Date|null, end: Date|null}}
+ */
+export const parseDateRange = (dateStr) => {
+  if (!dateStr) return { start: null, end: null };
+
+  const cleanDate = dateStr.trim();
+
+  // Look for date range patterns like "Feb 15 - 17, 2025" or "15-17 Feb 2025"
+  const rangePatterns = [
+    // "Feb 15 - 17, 2025"
+    {
+      regex: /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2})\s*[-–]\s*(\d{1,2}),?\s*(\d{4})/i,
+      parse: (m) => {
+        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+        const month = months[m[1].toLowerCase().substring(0, 3)];
+        return {
+          start: new Date(parseInt(m[4]), month, parseInt(m[2])),
+          end: new Date(parseInt(m[4]), month, parseInt(m[3]))
+        };
+      }
+    },
+    // "15 - 17 Feb 2025"
+    {
+      regex: /(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*,?\s*(\d{4})/i,
+      parse: (m) => {
+        const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+        const month = months[m[3].toLowerCase().substring(0, 3)];
+        return {
+          start: new Date(parseInt(m[4]), month, parseInt(m[1])),
+          end: new Date(parseInt(m[4]), month, parseInt(m[2]))
+        };
+      }
+    }
+  ];
+
+  for (const { regex, parse } of rangePatterns) {
+    const match = cleanDate.match(regex);
+    if (match) {
+      const result = parse(match);
+      if (!isNaN(result.start?.getTime()) && !isNaN(result.end?.getTime())) {
+        return result;
+      }
+    }
+  }
+
+  // If no range found, try to parse as single date
+  const singleDate = parseFlexibleDate(dateStr);
+  return { start: singleDate, end: singleDate };
 };
 
 /**
@@ -170,7 +262,7 @@ export const parseFlexibleDate = (dateStr) => {
  */
 export const categorizeEvent = (title, description = '') => {
   const text = `${title} ${description}`.toLowerCase();
-  
+
   if (text.includes('hackathon') || text.includes('coding') || text.includes('code')) {
     return 'hackathon';
   }
@@ -189,7 +281,7 @@ export const categorizeEvent = (title, description = '') => {
   if (text.includes('fest') || text.includes('festival')) {
     return 'fest';
   }
-  
+
   return 'other';
 };
 
@@ -202,7 +294,7 @@ export const categorizeEvent = (title, description = '') => {
 export const extractTags = (title, description = '') => {
   const text = `${title} ${description}`.toLowerCase();
   const tags = new Set();
-  
+
   const tagKeywords = {
     'Music Fest': ['music', 'concert', 'edm', 'band', 'dj', 'star night'],
     'College Fest': ['college', 'university', 'campus', 'student'],
@@ -215,13 +307,13 @@ export const extractTags = (title, description = '') => {
     'North Campus': ['north campus', 'srcc', 'hansraj', 'hindu', 'stephens', 'ramjas'],
     'South Campus': ['south campus', 'venky', 'lsr', 'gargi', 'jesus']
   };
-  
+
   for (const [tag, keywords] of Object.entries(tagKeywords)) {
     if (keywords.some(keyword => text.includes(keyword))) {
       tags.add(tag);
     }
   }
-  
+
   return Array.from(tags);
 };
 

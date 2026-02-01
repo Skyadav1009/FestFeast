@@ -2,33 +2,56 @@
  * API Service for FestFeast Frontend
  * Connects to the Node.js backend API
  * 
- * Replace mockApi.ts with this for production use
+ * Production-ready with backend authentication
  */
 
-import { FestEvent, EventInput, EventStatus, ApiResponse, SourceType } from "../types";
+import { FestEvent, EventInput, ApiResponse } from "../types";
 
 // API Base URL - set via environment variable
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Token storage key
+const TOKEN_KEY = 'festfeast_auth_token';
+
+/**
+ * Get stored auth token
+ */
+function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
 
 /**
  * Helper function for making API requests
  */
 async function apiRequest<T>(
-  endpoint: string, 
+  endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   try {
+    const token = getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...options.headers as Record<string, string>,
+    };
+
+    // Add auth header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
+      // If unauthorized, clear token
+      if (response.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+      }
+
       return {
         success: false,
         error: data.error || 'Request failed',
@@ -57,14 +80,14 @@ export const RealApiService = {
     filter?: { mode?: string; tag?: string; status?: string }
   ): Promise<ApiResponse<FestEvent[]>> => {
     const params = new URLSearchParams();
-    
+
     if (filter?.status) params.append('status', filter.status);
     if (filter?.mode) params.append('mode', filter.mode);
     if (filter?.tag) params.append('tag', filter.tag);
-    
+
     const queryString = params.toString();
     const endpoint = queryString ? `/events?${queryString}` : '/events';
-    
+
     return apiRequest<FestEvent[]>(endpoint);
   },
 
@@ -125,17 +148,61 @@ export const RealApiService = {
     return apiRequest('/health');
   },
 
-  isAuthenticated: () => !!localStorage.getItem('delhipulse_auth_token'),
-  
-  login: async (username: string, password: string): Promise<boolean> => {
-    if (username === 'admin' && password === 'password123') {
-      localStorage.setItem('delhipulse_auth_token', 'mock_jwt_token_xyz');
-      return true;
-    }
-    return false;
+  // Authentication methods - now using backend API
+  isAuthenticated: (): boolean => {
+    const token = getToken();
+    return !!token;
   },
 
-  logout: () => localStorage.removeItem('delhipulse_auth_token')
+  login: async (username: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.data?.token) {
+        localStorage.setItem(TOKEN_KEY, data.data.token);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  },
+
+  logout: (): void => {
+    localStorage.removeItem(TOKEN_KEY);
+    // Optionally call backend logout endpoint
+    fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' }).catch(() => { });
+  },
+
+  // Verify token with backend
+  verifyToken: async (): Promise<boolean> => {
+    const token = getToken();
+    if (!token) return false;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      return data.success === true;
+    } catch {
+      return false;
+    }
+  }
 };
 
 export const HybridApiService = {
@@ -151,6 +218,7 @@ export const HybridApiService = {
   isAuthenticated: RealApiService.isAuthenticated,
   login: RealApiService.login,
   logout: RealApiService.logout,
+  verifyToken: RealApiService.verifyToken,
   triggerScrape: RealApiService.triggerScrape,
   getScraperStatus: RealApiService.getScraperStatus,
   healthCheck: RealApiService.healthCheck,

@@ -1,0 +1,214 @@
+{
+  "lastUpdated": "2026-02-01T05:13:00.757Z",
+  "sources": {
+    "DUFestScraper": {
+      "name": "DUFestScraper",
+      "status": "healthy",
+      "lastSuccess": "2026-02-01T05:10:39.296Z",
+      "lastFailure": null,
+      "consecutiveFailures": 0,
+      "totalSuccesses": 8,
+      "totalFailures": 0,
+      "averageEvents": 34,
+      "history": [
+        {
+          "timestamp": "2026-02-01T05:10:39.296Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T05:00:40.070Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T04:50:54.923Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T04:40:40.480Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T04:20:43.968Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T04:10:36.737Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T04:00:48.378Z",
+          "success": true,
+          "eventsCount": 34
+        },
+        {
+          "timestamp": "2026-02-01T03:50:40.655Z",
+          "success": true,
+          "eventsCount": 34
+        }
+      ]
+    },
+    "EventSiteScraper": {
+      "name": "EventSiteScraper",
+      "status": "healthy",
+      "lastSuccess": "2026-02-01T05:11:17.489Z",
+      "lastFailure": null,
+      "consecutiveFailures": 0,
+      "totalSuccesses": 8,
+      "totalFailures": 0,
+      "averageEvents": 35,
+      "history": [
+        {
+          "timestamp": "2026-02-01T05:11:17.489Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T05:01:18.109Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T04:51:32.801Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T04:41:20.759Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T04:21:20.771Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T04:11:13.740Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T04:01:40.433Z",
+          "success": true,
+          "eventsCount": 35
+        },
+        {
+          "timestamp": "2026-02-01T03:51:19.790Z",
+          "success": true,
+          "eventsCount": 35
+        }
+      ]
+    },
+    "HackathonScraper": {
+      "name": "HackathonScraper",
+      "status": "healthy",
+      "lastSuccess": "2026-02-01T05:12:16.502Z",
+      "lastFailure": null,
+      "consecutiveFailures": 0,
+      "totalSuccesses": 8,
+      "totalFailures": 0,
+      "averageEvents": 27,
+      "history": [
+        {
+          "timestamp": "2026-02-01T05:12:16.502Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T05:02:15.824Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T04:52:30.724Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T04:42:24.195Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T04:22:18.124Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T04:12:19.381Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T04:02:34.847Z",
+          "success": true,
+          "eventsCount": 27
+        },
+        {
+          "timestamp": "2026-02-01T03:52:38.732Z",
+          "success": true,
+          "eventsCount": 27
+        }
+      ]
+    },
+    "DUEventsAggregatorScraper": {
+      "name": "DUEventsAggregatorScraper",
+      "status": "healthy",
+      "lastSuccess": "2026-02-01T05:13:00.757Z",
+      "lastFailure": null,
+      "consecutiveFailures": 0,
+      "totalSuccesses": 8,
+      "totalFailures": 0,
+      "averageEvents": 23,
+      "history": [
+        {
+          "timestamp": "2026-02-01T05:13:00.757Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T05:03:00.714Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T04:53:10.315Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T04:42:59.168Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T04:22:54.639Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T04:12:53.133Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T04:03:15.481Z",
+          "success": true,
+          "eventsCount": 23
+        },
+        {
+          "timestamp": "2026-02-01T03:53:25.697Z",
+          "success": true,
+          "eventsCount": 23
+        }
+      ]
+    }
+  },
+  "alerts": []
+}

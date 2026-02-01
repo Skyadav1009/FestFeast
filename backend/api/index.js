@@ -8,6 +8,7 @@ import eventsRouter from './events.js';
 import scrapeRouter from './scrape.js';
 import healthRouter from './health.js';
 import savedRouter from './saved.js';
+import authRouter from './auth.js';
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.use('/events', eventsRouter);
 router.use('/scrape', scrapeRouter);
 router.use('/health', healthRouter);
 router.use('/saved', savedRouter);
+router.use('/auth', authRouter);
 
 // API root info
 router.get('/', (req, res) => {
@@ -23,6 +25,11 @@ router.get('/', (req, res) => {
     success: true,
     message: 'FestFeast API v1.0',
     endpoints: {
+      auth: {
+        'POST /api/auth/login': 'Admin login',
+        'POST /api/auth/verify': 'Verify JWT token',
+        'POST /api/auth/logout': 'Admin logout'
+      },
       events: {
         'GET /api/events': 'Get all events (with filters)',
         'GET /api/events/latest': 'Get latest 20 events',
@@ -52,7 +59,9 @@ router.get('/', (req, res) => {
       },
       health: {
         'GET /api/health': 'Server health check',
-        'GET /api/health/db': 'Database health check'
+        'GET /api/health/db': 'Database health check',
+        'GET /api/health/scrapers': 'Scraper health status',
+        'GET /api/health/report': 'Health report (text)'
       }
     },
     documentation: 'See README.md for full documentation'

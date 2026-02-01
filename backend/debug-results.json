@@ -1,0 +1,34 @@
+{
+  "devfolio": {
+    "source": "devfolio",
+    "url": "https://devfolio.co/hackathons",
+    "scraper": "HackathonScraper",
+    "success": true,
+    "error": null,
+    "cardsFound": 31,
+    "workingSelector": "[class*=\"HackathonCard\"]",
+    "selectorResults": {
+      "[class*=\"HackathonCard\"]": 31,
+      ".hackathon-card": 0,
+      "a[href*=\"/hackathons/\"]": 4,
+      "[class*=\"Card\"]": 31
+    },
+    "sampleData": [
+      {
+        "title": "ETHDenver 2026",
+        "titleSelector": "h3",
+        "link": "https://ethdenver2026.devfolio.co/"
+      },
+      {
+        "title": "Build India: Anthropic x Replit x Lightspeed Hackathon",
+        "titleSelector": "h3",
+        "link": "https://buildindia2026.devfolio.co/"
+      },
+      {
+        "title": "ETHDenver 2026",
+        "titleSelector": "h3",
+        "link": "https://ethdenver2026.devfolio.co/"
+      }
+    ]
+  }
+}
